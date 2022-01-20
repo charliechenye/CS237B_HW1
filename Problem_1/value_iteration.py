@@ -14,6 +14,8 @@ def value_iteration(problem, reward, terminal_mask, gam):
 
     assert terminal_mask.ndim == 1 and reward.ndim == 2
 
+    tf_terminal_mask = tf.cast(terminal_mask, tf.bool)
+
     # perform value iteration
     for _ in range(1000):
         ######### Your code starts here #########
@@ -28,7 +30,14 @@ def value_iteration(problem, reward, terminal_mask, gam):
 
         # compute the next value function estimate for the iteration
         # compute err = tf.linalg.norm(V_new - V_prev) as a breaking condition
+        Va = []
 
+        for a in range(adim):
+            Va.append(tf.where(tf_terminal_mask,
+                x=reward[:, a],
+                y=reward[:, a] + gam * tf.linalg.matvec(Ts[a], V)))
+
+        V_new = tf.reduce_max(Va, axis=0)
         ######### Your code ends here ###########
 
         if err < 1e-7:
