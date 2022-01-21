@@ -31,11 +31,19 @@ def Q_learning(Q_network, reward_fn, is_terminal_fn, X, U, Xp, gam):
         ######### Your code starts here #########
         # compute the loss
 
-        # given the current (Q) and the optimal next state Q function (Q_next), 
+        # given the current (Q) and the optimal next state Q function (next_Q), 
         # compute the Q-learning loss
 
         # make sure to account for the reward, the terminal state and the
         # discount factor gam
+
+        lhs = Q
+
+        r_t = reward_fn(X_, U_)
+        is_terminal = is_terminal_fn(X_)
+        rhs = tf.where(is_terminal, x=r_t, y=r_t + gam * next_Q)
+
+        l = tf.reduce_mean(tf.square(lhs - rhs))
 
         ######### Your code ends here ###########
 
@@ -47,6 +55,7 @@ def Q_learning(Q_network, reward_fn, is_terminal_fn, X, U, Xp, gam):
     # create the Adam optimizer with tensorflow keras
     # experiment with different learning rates [1e-4, 1e-3, 1e-2, 1e-1]
 
+    optimizer = tf.keras.optimizers.Adam(1e-3)
 
     ######### Your code ends here ###########
 
@@ -56,6 +65,7 @@ def Q_learning(Q_network, reward_fn, is_terminal_fn, X, U, Xp, gam):
         # apply a single step of gradient descent to the Q_network variables
         # take a look at the tf.keras.optimizers
 
+        optimizer.minimize(loss, Q_network.trainable_variables)
 
         ######### Your code ends here ###########
 
@@ -97,6 +107,9 @@ def main():
             # remember that tf.random.categorical takes in the log of
             # probabilities, not the probabilities themselves
 
+            log_prob = tf.math.log(Ts[u][x])
+            xp = tf.random.categorical(log_prob[tf.newaxis], 1)
+            
             ######### Your code ends here ###########
 
             # convert integer states to a 2D representation using idx2pos
