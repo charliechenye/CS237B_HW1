@@ -45,7 +45,39 @@ def value_iteration(problem, reward, terminal_mask, gam):
 
     return V
 
+# Gather one trajectory according to the policy #################################
+def simulate_trajectory(problem, V, R, gam, goal_idx, 
+                        max_step=100, init_x=0, init_y=0):
+    Ts = problem["Ts"]
+    pos2idx = problem["pos2idx"]
+    idx2pos = problem["idx2pos"]
+    sdim, adim = Ts[0].shape[-1], len(Ts) 
+    x_t = pos2idx[init_x, init_y] # initial state
 
+    tau_x = [0]
+    tau_y = [0]
+    # simulate trajectory up to max_step
+    for _ in range(max_step):
+        # compute optimal action
+        Qs = []
+        for u in range(adim):
+            Qs.append(R[x_t, u] + gam * tf.reduce_sum(V * Ts[u][x_t]))
+        u_t = tf.argmax(Qs, axis=0)
+
+        # sample from transition dynamics
+        x_t_plus_1 = np.random.choice(np.arange(sdim), p=Ts[u_t][x_t].numpy())
+
+        pt = idx2pos[x_t_plus_1]
+        tau_x.append(pt[0])
+        tau_y.append(pt[1])
+
+        if x_t_plus_1 == goal_idx:
+            break
+
+        x_t = x_t_plus_1
+
+    plt.plot(tau_x, tau_y, "r")
+ 
 # value iteration ##############################################################
 def main():
     # generate the problem
