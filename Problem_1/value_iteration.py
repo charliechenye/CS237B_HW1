@@ -29,7 +29,6 @@ def value_iteration(problem, reward, terminal_mask, gam):
         # terminal_mask has shape [sdim] and has entries 1 for terminal states
 
         # compute the next value function estimate for the iteration
-        # compute err = tf.linalg.norm(V_new - V_prev) as a breaking condition
         Va = []
 
         for a in range(adim):
@@ -38,6 +37,11 @@ def value_iteration(problem, reward, terminal_mask, gam):
                 y=reward[:, a] + gam * tf.linalg.matvec(Ts[a], V)))
 
         V_new = tf.reduce_max(Va, axis=0)
+
+        # compute err = tf.linalg.norm(V_new - V_prev) as a breaking condition
+        err = tf.linalg.norm(V_new - V)
+        V = V_new
+
         ######### Your code ends here ###########
 
         if err < 1e-7:
