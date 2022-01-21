@@ -104,5 +104,27 @@ def main():
     plt.show()
 
 
+# retrieve value function from value iteration
+def run_value_iteration(problem):
+    n = problem["n"]
+    sdim = problem["Ts"][0].shape[-1]
+    goal_idx = problem["pos2idx"][19, 9]
+
+    # create the terminal mask vector
+    terminal_mask = np.zeros([sdim])
+    terminal_mask[goal_idx] = 1.0
+    terminal_mask = tf.convert_to_tensor(terminal_mask, dtype=tf.float32)
+
+    # generate the reward vector
+    reward = np.zeros([sdim, 4])
+    reward[goal_idx, :] = 1.0
+    reward = tf.convert_to_tensor(reward, dtype=tf.float32)
+
+    gam = 0.95
+    V_opt = value_iteration(problem, reward, terminal_mask, gam)
+
+    return V_opt
+
+
 if __name__ == "__main__":
     main()

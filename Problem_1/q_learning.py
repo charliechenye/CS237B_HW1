@@ -4,7 +4,8 @@ import matplotlib
 import tensorflow as tf, numpy as np, matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from utils import map_chunked, generate_problem, visualize_value_function
+from utils import map_chunked, generate_problem, visualize_value_function, best_action_given_value
+from value_iteration import run_value_iteration
 
 
 def Q_learning(Q_network, reward_fn, is_terminal_fn, X, U, Xp, gam):
@@ -109,7 +110,7 @@ def main():
 
             log_prob = tf.math.log(Ts[u][x])
             xp = tf.random.categorical(log_prob[tf.newaxis], 1)
-            
+
             ######### Your code ends here ###########
 
             # convert integer states to a 2D representation using idx2pos
@@ -139,6 +140,13 @@ def main():
     # it needs to take in 2 state + 1 action input (3 inputs)
     # it needs to output a single value (batch x 1 output) - the Q-value
     # it should be 3 layers deep with
+
+    Q_network = tf.keras.Sequential([
+        tf.keras.layers.Dense(64, "tanh"),
+        tf.keras.layers.Dense(64, "tanh"),
+        tf.keras.layers.Dense(1),
+    ])
+    Q_network.build((None, 2 + 1)) # input is (state_x, state_y, u)
 
     ######### Your code ends here ###########
 
@@ -173,6 +181,18 @@ def main():
     plt.show()
     ########################################################
 
+    # compare optimal action with value iteration
+    ########################################################
+    # q learning
+    actions_ql = best_action_given_value(V.numpy().reshape((n, n)))
+    # value iteration
+    V_vi = run_value_iter(problem)
+    actions_vi = best_action_given_value(V_vi.numpy().reshape((n, n)))
+
+    action_same = np.all(actions_ql == actions_vi, axis=-1)
+    plt.imshow(action_same, origin="lower")
+    plt.colorbar()
+    plt.show()
 
 if __name__ == "__main__":
     main()
