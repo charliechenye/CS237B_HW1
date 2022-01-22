@@ -5,12 +5,13 @@ from utils import (
     decode_jpeg,
     IMG_SIZE,
     normalize_resize_image,
+    normalize_image,
     LABELS,
     maybe_makedirs,
 )
 
 
-def compute_brute_force_classification(model, image_path, nH=8, nW=8):
+def compute_brute_force_classification(model, image_path, nH=8, nW=8, PADDING=.05):
     """
     This function returns the probabilities of each window.
     Inputs:
@@ -18,6 +19,7 @@ def compute_brute_force_classification(model, image_path, nH=8, nW=8):
         image_path: path to the image to be analysed
         nH: number of windows in the vertical direction
         nW: number of windows in the horizontal direction
+        PADDING: relative padding percentage compared to the window size
     Outputs:
         window_predictions: a (nH, nW, 3) np.array.
                             The last dim (size 3) is the probabilities
@@ -33,7 +35,26 @@ def compute_brute_force_classification(model, image_path, nH=8, nW=8):
 
     ######### Your code starts here #########
 
+    normalized_img = normalize_image(raw_image)
 
+    ys, xs = tf.meshgrid(tf.range(nH, dtype=tf.float32),
+                         tf.range(nW, dtype=tf.float32), indexing="ij")
+    ys = tf.reshape(ys, [-1])
+    xs = tf.reshape(xs, [-1])
+
+    y1 = (ys - PADDING) / nH
+    x1 = (xs - PADDING) / nW
+    y2 = (ys + 1 + PADDING) / nH
+    x2 = (xs + 1 + PADDING) / nW
+
+    boxes = tf.stack([y1, x1, y2, x2], axis=-1)
+    # all crops come from the same image
+    box_indices = tf.zeros(nH * nW, dtype=tf.int32)
+
+    window_images = tf.image.crop_and_resize(
+        normalized_img[tf.newaxis], boxes, box_indices, (IMG_SIZE, IMG_SIZE))
+    window_predictions = model(window_images)
+    window_predictions = tf.reshape(window_predictions, (nH, nW, -1))
 
 
     ######### Your code ends here #########
@@ -61,14 +82,26 @@ def compute_convolutional_KxK_classification(model, image_path):
 
     # First calculate K
 
+    K = conv_model.output.shape[-2]
+
     # Next create a intermediate input structure which takes in a bottleneck tensor
 
     # Create the classifier model which takes in the bottleneck tensor and outputs the class probabilities
     # Note: you must reuse the weights (layers) from the trained model as well as the int_input
 
+    classifer_model = model.layers[1]
+
     # Predict the ouput of the convolution layer using conv_model
 
+    classifier_out = conv_model(resized_patch[tf.newaxis])
+
     # Reshape so that patches become batches and predict
+
+    classifier_out = tf.reshape(classifier_out, (-1, tf.shape(classifier_out)[-1]))
+
+    # get predictions for the K X K patches
+    predictionsKxK = classifer_model(classifier_out)
+
     ######### Your code ends here #########
 
     return np.reshape(predictionsKxK, [K, K, -1])
@@ -96,7 +129,15 @@ def compute_and_plot_saliency(model, image_path):
         # Fill in the parts indicated by #FILL#. No additional lines are
         # required.
 
+        t.watch(raw_image)
+        
+        normalized_img = normalize_resize_image(raw_image, IMG_SIZE)
+        logits_output = logits_model(normalized_img[tf.newaxis])[0]
+        max_out_value = tf.reduce_max(logits_output)
+        top_class = tf.argmax(logits_output)
 
+        w_hijc = t.gradient(max_out_value, raw_image)
+        M = tf.reduce_max(w_hijc, axis=-1)
 
         ######### Your code ends here #########
 
