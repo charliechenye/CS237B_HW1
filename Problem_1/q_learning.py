@@ -142,8 +142,8 @@ def main():
     # it should be 3 layers deep with
 
     Q_network = tf.keras.Sequential([
-        tf.keras.layers.Dense(64, "tanh"),
-        tf.keras.layers.Dense(64, "tanh"),
+        tf.keras.layers.Dense(64, "relu"),
+        tf.keras.layers.Dense(64, "relu"),
         tf.keras.layers.Dense(1),
     ])
     Q_network.build((None, 2 + 1)) # input is (state_x, state_y, u)
@@ -186,7 +186,7 @@ def main():
     # q learning
     actions_ql = best_action_given_value(V.numpy().reshape((n, n)))
     # value iteration
-    V_vi = run_value_iter(problem)
+    V_vi = run_value_iteration(problem)
     actions_vi = best_action_given_value(V_vi.numpy().reshape((n, n)))
 
     action_same = np.all(actions_ql == actions_vi, axis=-1)

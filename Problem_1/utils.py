@@ -133,7 +133,7 @@ def generate_problem():
     Problem = dict(Ts=Ts, n=n, m=m, pos2idx=pos2idx, idx2pos=idx2pos)
     return Problem
 
-def best_action_given_value(V, pos2idx):
+def best_action_given_value(V):
     """
     Obtain optimal action for each state given some value table
     Args:

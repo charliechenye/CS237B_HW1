@@ -104,6 +104,9 @@ def main():
 
     plt.figure(213)
     visualize_value_function(np.array(V_opt).reshape((n, n)))
+    
+    goal_idx = problem["pos2idx"][19, 9]
+    simulate_trajectory(problem, V_opt, reward, gam, goal_idx)
     plt.title("value iteration")
     plt.show()
 
