@@ -26,6 +26,20 @@ def classify(model, test_dir):
         # break after 1 epoch
                 #pdb.set_trace()
 
+    num_test = test_img_gen.samples
+    y_true = []
+    y_pred = []
+    for i in range(num_test):
+        x, y = next(test_img_gen)
+        y_true.append(y)
+        y_pred.append(model(x))
+
+    correct_prediction = tf.keras.metrics.categorical_accuracy(y_true, y_pred)
+    for i in range(num_test):
+        if not correct_prediction[i]:
+            print(test_img_gen.filenames[i], f"predicted: {LABELS[np.argmax(y_pred[i])]}")
+        # pdb.set_trace()
+    accuracy = tf.reduce_mean(correct_prediction).numpy()
 
     ######### Your code ends here #########
 
